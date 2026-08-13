@@ -75,19 +75,27 @@ func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) (Rep
 }
 
 const createRoom = `-- name: CreateRoom :one
-INSERT INTO rooms (id, name, description)
-VALUES ($1, $2, $3)
-RETURNING id, name, description, created_at, last_activity_at, is_active
+INSERT INTO rooms (id, name, description, is_private, join_code)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, name, description, created_at, last_activity_at, is_active, is_private, join_code
 `
 
 type CreateRoomParams struct {
 	ID          string      `json:"id"`
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
+	IsPrivate   pgtype.Bool `json:"is_private"`
+	JoinCode    pgtype.Text `json:"join_code"`
 }
 
 func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error) {
-	row := q.db.QueryRow(ctx, createRoom, arg.ID, arg.Name, arg.Description)
+	row := q.db.QueryRow(ctx, createRoom,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.IsPrivate,
+		arg.JoinCode,
+	)
 	var i Room
 	err := row.Scan(
 		&i.ID,
@@ -96,6 +104,8 @@ func (q *Queries) CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, e
 		&i.CreatedAt,
 		&i.LastActivityAt,
 		&i.IsActive,
+		&i.IsPrivate,
+		&i.JoinCode,
 	)
 	return i, err
 }
@@ -125,7 +135,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getRoom = `-- name: GetRoom :one
-SELECT id, name, description, created_at, last_activity_at, is_active FROM rooms
+SELECT id, name, description, created_at, last_activity_at, is_active, is_private, join_code FROM rooms
 WHERE id = $1 LIMIT 1
 `
 
@@ -139,6 +149,29 @@ func (q *Queries) GetRoom(ctx context.Context, id string) (Room, error) {
 		&i.CreatedAt,
 		&i.LastActivityAt,
 		&i.IsActive,
+		&i.IsPrivate,
+		&i.JoinCode,
+	)
+	return i, err
+}
+
+const getRoomByJoinCode = `-- name: GetRoomByJoinCode :one
+SELECT id, name, description, created_at, last_activity_at, is_active, is_private, join_code FROM rooms
+WHERE join_code = $1 AND is_active = true LIMIT 1
+`
+
+func (q *Queries) GetRoomByJoinCode(ctx context.Context, joinCode pgtype.Text) (Room, error) {
+	row := q.db.QueryRow(ctx, getRoomByJoinCode, joinCode)
+	var i Room
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.LastActivityAt,
+		&i.IsActive,
+		&i.IsPrivate,
+		&i.JoinCode,
 	)
 	return i, err
 }
@@ -214,8 +247,8 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 }
 
 const listActiveRooms = `-- name: ListActiveRooms :many
-SELECT id, name, description, created_at, last_activity_at, is_active FROM rooms
-WHERE is_active = true
+SELECT id, name, description, created_at, last_activity_at, is_active, is_private, join_code FROM rooms
+WHERE is_active = true AND is_private = false
 ORDER BY last_activity_at DESC
 LIMIT $1 OFFSET $2
 `
@@ -241,6 +274,8 @@ func (q *Queries) ListActiveRooms(ctx context.Context, arg ListActiveRoomsParams
 			&i.CreatedAt,
 			&i.LastActivityAt,
 			&i.IsActive,
+			&i.IsPrivate,
+			&i.JoinCode,
 		); err != nil {
 			return nil, err
 		}

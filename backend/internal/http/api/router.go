@@ -34,6 +34,7 @@ func NewRouter(db *database.DB, wsManager *ws.Manager) *chi.Mux {
 
 			r.Get("/rooms", roomsHandler.ListRooms)
 			r.Post("/rooms", roomsHandler.CreateRoom)
+			r.Post("/rooms/join", roomsHandler.JoinPrivateRoom)
 			r.Get("/rooms/{roomId}/messages", roomsHandler.GetRoomMessages)
 			
 			// Moderation

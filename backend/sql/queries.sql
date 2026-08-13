@@ -8,8 +8,8 @@ SELECT * FROM users
 WHERE id = $1 LIMIT 1;
 
 -- name: CreateRoom :one
-INSERT INTO rooms (id, name, description)
-VALUES ($1, $2, $3)
+INSERT INTO rooms (id, name, description, is_private, join_code)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: GetRoom :one
@@ -18,9 +18,13 @@ WHERE id = $1 LIMIT 1;
 
 -- name: ListActiveRooms :many
 SELECT * FROM rooms
-WHERE is_active = true
+WHERE is_active = true AND is_private = false
 ORDER BY last_activity_at DESC
 LIMIT $1 OFFSET $2;
+
+-- name: GetRoomByJoinCode :one
+SELECT * FROM rooms
+WHERE join_code = $1 AND is_active = true LIMIT 1;
 
 -- name: CreateMessage :one
 INSERT INTO messages (id, room_id, user_id, content)

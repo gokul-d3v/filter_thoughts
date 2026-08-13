@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/veritas-chat/backend/internal/auth"
 	"github.com/veritas-chat/backend/internal/database"
@@ -22,6 +23,8 @@ func NewRoomsHandler(db *database.DB) *RoomsHandler {
 type CreateRoomRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	IsPrivate   bool   `json:"is_private"`
+	JoinCode    string `json:"join_code"`
 }
 
 func (h *RoomsHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
@@ -54,10 +57,23 @@ func (h *RoomsHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	roomID := "room_" + auth.GenerateUserID()[4:] // quick random ID reuse
+	var joinCode *string
+	if req.IsPrivate {
+		if req.JoinCode != "" {
+			joinCode = &req.JoinCode
+		} else {
+			// Generate random short join code
+			code := uuid.New().String()[:8]
+			joinCode = &code
+		}
+	}
+
 	room, err := h.db.Queries.CreateRoom(r.Context(), database.CreateRoomParams{
 		ID:          roomID,
 		Name:        req.Name,
-		Description: descriptionText,
+		Description: pgtype.Text{String: req.Description, Valid: req.Description != ""},
+		IsPrivate:   pgtype.Bool{Bool: req.IsPrivate, Valid: true},
+		JoinCode:    pgtype.Text{String: func() string { if joinCode != nil { return *joinCode }; return "" }(), Valid: joinCode != nil},
 	})
 	if err != nil {
 		http.Error(w, "Failed to create room", http.StatusInternalServerError)
@@ -127,7 +143,7 @@ func (h *RoomsHandler) GetRoomMessages(w http.ResponseWriter, r *http.Request) {
 		CreatedAt   string `json:"created_at"`
 	}
 
-	var payloads []MessagePayload
+	payloads := make([]MessagePayload, 0)
 	for _, m := range messages {
 		// We'd normally join with users table to get display name.
 		// For simplicity, we just use the user ID as display name here or do a quick lookup.
@@ -145,4 +161,38 @@ func (h *RoomsHandler) GetRoomMessages(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payloads)
+}
+
+func (h *RoomsHandler) JoinPrivateRoom(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	type JoinRequest struct {
+		JoinCode string `json:"join_code"`
+	}
+	var req JoinRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.JoinCode == "" {
+		http.Error(w, "Join code is required", http.StatusBadRequest)
+		return
+	}
+
+	room, err := h.db.Queries.GetRoomByJoinCode(r.Context(), pgtype.Text{String: req.JoinCode, Valid: true})
+	if err != nil {
+		// Log the error in reality, but return 404 for security
+		http.Error(w, "Room not found or inactive", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"room_id": room.ID,
+		"name":    room.Name,
+	})
 }

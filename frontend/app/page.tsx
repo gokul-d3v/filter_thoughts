@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function Home() {
   const [session, setSession] = useState<{ user_id: string; display_name: string } | null>(null);
@@ -109,44 +109,12 @@ export default function Home() {
       
       {/*  Main Content Area  */}
       <main className="flex-1 p-6 md:p-12 transition-all duration-300">
-        {/*  TopNavBar (Desktop)  */}
-        <header className="hidden md:flex justify-between items-center max-w-7xl mx-auto px-12 h-24 w-full sticky top-0 z-30 bg-ivory-bg/90 backdrop-blur-md">
-          <div className="flex items-center space-x-8">
-            <div className="w-4"></div>
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8 max-w-3xl">
+            <h1 className="hidden md:block font-headline-lg text-headline-lg text-primary mb-4 tracking-tight">Discovery Hub</h1>
+            <p className="font-body-lg text-body-lg text-on-surface-variant/90 leading-relaxed">Explore active network nodes and secure communication channels. All metrics are anonymized and end-to-end encrypted.</p>
           </div>
-          <nav className="flex space-x-8 bg-white/50 px-8 py-3 rounded-full shadow-soft backdrop-blur-sm border border-soft-clay/20">
-<Link className="font-body-md text-body-md text-primary font-medium border-b-2 border-deep-olive pb-0.5 transition-opacity" href="/">Discover</Link>
-<Link className="font-body-md text-body-md text-on-surface-variant hover:text-deep-olive transition-colors duration-200" href="/rooms">Rooms</Link>
-<Link className="font-body-md text-body-md text-on-surface-variant hover:text-deep-olive transition-colors duration-200" href="/private">Private</Link>
-</nav>
-<div className="flex items-center space-x-6 text-primary">
-<div className="relative">
-<span className="material-symbols-outlined absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-sage text-sm">search</span>
-<input className="pl-11 pr-5 py-2.5 bg-white shadow-soft border-none rounded-full focus:ring-2 focus:ring-muted-sage/30 font-label-md text-label-md w-64 transition-all duration-300 focus:w-72" placeholder="Search network..." type="text"/>
-</div>
-<Link href="/notifications" className="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center hover:text-deep-olive transition-colors duration-200 hover:-translate-y-0.5">
-<span className="material-symbols-outlined text-[20px]">notifications</span>
-</Link>
-<Link href="/settings" className="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center hover:text-deep-olive transition-colors duration-200 hover:-translate-y-0.5">
-<span className="material-symbols-outlined text-[20px]">settings</span>
-</Link>
-</div>
-</header>
-{/*  TopAppBar (Mobile)  */}
-<header className="md:hidden flex items-center justify-between px-6 h-20 sticky top-0 z-50 bg-ivory-bg/90 backdrop-blur-md">
-<h1 className="font-headline-lg-mobile text-[28px] font-bold text-primary tracking-tight">Discovery Hub</h1>
-<button className="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center text-deep-olive">
-<span className="material-symbols-outlined">search</span>
-</button>
-</header>
-{/*  Content Canvas  */}
-<div className="max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-16">
-<div className="mb-section-gap max-w-3xl">
-<h1 className="hidden md:block font-headline-lg text-headline-lg text-primary mb-6 tracking-tight">Discovery Hub</h1>
-<p className="font-body-lg text-body-lg text-on-surface-variant/90 leading-relaxed">Explore active network nodes and secure communication channels. All metrics are anonymized and end-to-end encrypted.</p>
-</div>
-{/*  Dashboard Grid Layout  */}
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 {/*  Main Content Column  */}
 <div className="lg:col-span-8 space-y-12">
 {/*  Search/Filter Bar  */}

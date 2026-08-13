@@ -6,6 +6,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -14,6 +16,7 @@ type Querier interface {
 	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetRoom(ctx context.Context, id string) (Room, error)
+	GetRoomByJoinCode(ctx context.Context, joinCode pgtype.Text) (Room, error)
 	GetRoomMessages(ctx context.Context, arg GetRoomMessagesParams) ([]Message, error)
 	GetRoomPresenceCount(ctx context.Context, roomID string) (int64, error)
 	GetUser(ctx context.Context, id string) (User, error)

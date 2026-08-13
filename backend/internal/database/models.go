@@ -32,6 +32,8 @@ type Room struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	LastActivityAt pgtype.Timestamptz `json:"last_activity_at"`
 	IsActive       pgtype.Bool        `json:"is_active"`
+	IsPrivate      pgtype.Bool        `json:"is_private"`
+	JoinCode       pgtype.Text        `json:"join_code"`
 }
 
 type RoomPresence struct {
