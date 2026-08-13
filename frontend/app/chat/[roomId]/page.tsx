@@ -19,6 +19,7 @@ export default function ChatRoom() {
   const roomId = params.roomId as string;
   
   const [messages, setMessages] = useState<Message[]>([]);
+  const [roomName, setRoomName] = useState("Secure Channel");
   const [input, setInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const ws = useRef<WebSocket | null>(null);
@@ -32,11 +33,19 @@ export default function ChatRoom() {
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const res = await fetch(`/api/v1/rooms/${roomId}/messages`);
-        if (res.ok) {
-          const data = await res.json();
-          // The API returns latest first due to ORDER BY created_at DESC, so we reverse it
-          setMessages(data.reverse() || []);
+        const [msgRes, roomsRes] = await Promise.all([
+          fetch(`/api/v1/rooms/${roomId}/messages`),
+          fetch("/api/v1/rooms")
+        ]);
+        if (msgRes.ok) {
+          const data = await msgRes.json();
+          const messageArray = Array.isArray(data) ? data : [];
+          setMessages(messageArray.reverse());
+        }
+        if (roomsRes.ok) {
+          const rooms = await roomsRes.json();
+          const room = Array.isArray(rooms) && rooms.find((r: any) => r.id === roomId);
+          if (room) setRoomName(room.name);
         }
       } catch (err) {
         console.error("Failed to fetch message history", err);
@@ -121,7 +130,7 @@ export default function ChatRoom() {
             <span className="material-symbols-outlined">arrow_back</span>
           </Link>
           <div>
-            <h1 className="font-headline-sm font-bold text-primary">{roomId}</h1>
+            <h1 className="font-headline-sm font-bold text-primary">{roomName}</h1>
             <div className="flex items-center space-x-2">
               <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-deep-olive animate-pulse' : 'bg-red-500'}`}></span>
               <span className="font-label-sm text-muted-sage">{isConnected ? 'Connected securely' : 'Disconnected'}</span>
