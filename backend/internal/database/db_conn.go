@@ -14,7 +14,7 @@ type DB struct {
 	Queries *Queries
 }
 
-func New(ctx context.Context, databaseURL string) (*DB, error) {
+func NewDB(ctx context.Context, databaseURL string) (*DB, error) {
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing database config: %w", err)

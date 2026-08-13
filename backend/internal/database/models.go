@@ -17,6 +17,14 @@ type Message struct {
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type Report struct {
+	ID         string             `json:"id"`
+	MessageID  string             `json:"message_id"`
+	ReporterID string             `json:"reporter_id"`
+	Reason     string             `json:"reason"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type Room struct {
 	ID             string             `json:"id"`
 	Name           string             `json:"name"`
@@ -24,6 +32,12 @@ type Room struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	LastActivityAt pgtype.Timestamptz `json:"last_activity_at"`
 	IsActive       pgtype.Bool        `json:"is_active"`
+}
+
+type RoomPresence struct {
+	RoomID     string             `json:"room_id"`
+	UserID     string             `json:"user_id"`
+	LastSeenAt pgtype.Timestamptz `json:"last_seen_at"`
 }
 
 type User struct {

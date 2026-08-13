@@ -1,0 +1,12 @@
+# Backend gitignore
+server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.env
+coverage.txt
+vendor/

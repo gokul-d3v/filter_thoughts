@@ -1,0 +1,21 @@
+"use client";
+
+import { motion } from "framer-motion";
+
+export default function NotificationsPage() {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="min-h-screen p-8 md:p-12 flex flex-col items-center justify-center text-center"
+    >
+      <div className="w-16 h-16 rounded-full bg-soft-clay/30 flex items-center justify-center mb-6">
+        <span className="material-symbols-outlined text-muted-sage text-3xl">notifications_off</span>
+      </div>
+      <h1 className="font-headline-lg text-headline-lg text-primary mb-4 tracking-tight">Notifications</h1>
+      <p className="font-body-md text-on-surface-variant max-w-md mx-auto leading-relaxed">
+        You have no new notifications. Activity alerts for your secure sessions will appear here.
+      </p>
+    </motion.div>
+  );
+}

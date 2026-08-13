@@ -43,6 +43,37 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 	return i, err
 }
 
+const createReport = `-- name: CreateReport :one
+INSERT INTO reports (id, message_id, reporter_id, reason)
+VALUES ($1, $2, $3, $4)
+RETURNING id, message_id, reporter_id, reason, created_at
+`
+
+type CreateReportParams struct {
+	ID         string `json:"id"`
+	MessageID  string `json:"message_id"`
+	ReporterID string `json:"reporter_id"`
+	Reason     string `json:"reason"`
+}
+
+func (q *Queries) CreateReport(ctx context.Context, arg CreateReportParams) (Report, error) {
+	row := q.db.QueryRow(ctx, createReport,
+		arg.ID,
+		arg.MessageID,
+		arg.ReporterID,
+		arg.Reason,
+	)
+	var i Report
+	err := row.Scan(
+		&i.ID,
+		&i.MessageID,
+		&i.ReporterID,
+		&i.Reason,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createRoom = `-- name: CreateRoom :one
 INSERT INTO rooms (id, name, description)
 VALUES ($1, $2, $3)
@@ -152,6 +183,18 @@ func (q *Queries) GetRoomMessages(ctx context.Context, arg GetRoomMessagesParams
 	return items, nil
 }
 
+const getRoomPresenceCount = `-- name: GetRoomPresenceCount :one
+SELECT COUNT(*) FROM room_presence
+WHERE room_id = $1 AND last_seen_at > CURRENT_TIMESTAMP - INTERVAL '5 minutes'
+`
+
+func (q *Queries) GetRoomPresenceCount(ctx context.Context, roomID string) (int64, error) {
+	row := q.db.QueryRow(ctx, getRoomPresenceCount, roomID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, display_name, created_at, last_seen_at, status FROM users
 WHERE id = $1 LIMIT 1
@@ -207,4 +250,104 @@ func (q *Queries) ListActiveRooms(ctx context.Context, arg ListActiveRoomsParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const listReports = `-- name: ListReports :many
+SELECT r.id, r.message_id, r.reporter_id, r.reason, r.created_at, 
+       m.content as message_content, m.user_id as message_author_id
+FROM reports r
+JOIN messages m ON r.message_id = m.id
+ORDER BY r.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListReportsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListReportsRow struct {
+	ID              string             `json:"id"`
+	MessageID       string             `json:"message_id"`
+	ReporterID      string             `json:"reporter_id"`
+	Reason          string             `json:"reason"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	MessageContent  string             `json:"message_content"`
+	MessageAuthorID string             `json:"message_author_id"`
+}
+
+func (q *Queries) ListReports(ctx context.Context, arg ListReportsParams) ([]ListReportsRow, error) {
+	rows, err := q.db.Query(ctx, listReports, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListReportsRow
+	for rows.Next() {
+		var i ListReportsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.MessageID,
+			&i.ReporterID,
+			&i.Reason,
+			&i.CreatedAt,
+			&i.MessageContent,
+			&i.MessageAuthorID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removePresence = `-- name: RemovePresence :exec
+DELETE FROM room_presence
+WHERE room_id = $1 AND user_id = $2
+`
+
+type RemovePresenceParams struct {
+	RoomID string `json:"room_id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) RemovePresence(ctx context.Context, arg RemovePresenceParams) error {
+	_, err := q.db.Exec(ctx, removePresence, arg.RoomID, arg.UserID)
+	return err
+}
+
+const softDeleteMessage = `-- name: SoftDeleteMessage :exec
+UPDATE messages 
+SET deleted_at = CURRENT_TIMESTAMP 
+WHERE id = $1 AND user_id = $2
+`
+
+type SoftDeleteMessageParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) SoftDeleteMessage(ctx context.Context, arg SoftDeleteMessageParams) error {
+	_, err := q.db.Exec(ctx, softDeleteMessage, arg.ID, arg.UserID)
+	return err
+}
+
+const upsertPresence = `-- name: UpsertPresence :exec
+INSERT INTO room_presence (room_id, user_id, last_seen_at)
+VALUES ($1, $2, CURRENT_TIMESTAMP)
+ON CONFLICT (room_id, user_id) 
+DO UPDATE SET last_seen_at = CURRENT_TIMESTAMP
+`
+
+type UpsertPresenceParams struct {
+	RoomID string `json:"room_id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) UpsertPresence(ctx context.Context, arg UpsertPresenceParams) error {
+	_, err := q.db.Exec(ctx, upsertPresence, arg.RoomID, arg.UserID)
+	return err
 }

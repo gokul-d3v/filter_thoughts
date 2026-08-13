@@ -10,12 +10,18 @@ import (
 
 type Querier interface {
 	CreateMessage(ctx context.Context, arg CreateMessageParams) (Message, error)
+	CreateReport(ctx context.Context, arg CreateReportParams) (Report, error)
 	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetRoom(ctx context.Context, id string) (Room, error)
 	GetRoomMessages(ctx context.Context, arg GetRoomMessagesParams) ([]Message, error)
+	GetRoomPresenceCount(ctx context.Context, roomID string) (int64, error)
 	GetUser(ctx context.Context, id string) (User, error)
 	ListActiveRooms(ctx context.Context, arg ListActiveRoomsParams) ([]Room, error)
+	ListReports(ctx context.Context, arg ListReportsParams) ([]ListReportsRow, error)
+	RemovePresence(ctx context.Context, arg RemovePresenceParams) error
+	SoftDeleteMessage(ctx context.Context, arg SoftDeleteMessageParams) error
+	UpsertPresence(ctx context.Context, arg UpsertPresenceParams) error
 }
 
 var _ Querier = (*Queries)(nil)
