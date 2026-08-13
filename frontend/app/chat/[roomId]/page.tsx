@@ -171,9 +171,13 @@ export default function ChatRoom() {
     e.target.style.height = Math.min(e.target.scrollHeight, 128) + "px";
   };
 
-  // Unique participants from messages
+  // Unique participants from messages — exclude self (already shown as "You")
   const participants = Array.from(
-    new Map(messages.filter(m => m.sender_id !== "system").map(m => [m.sender_id, m.display_name])).entries()
+    new Map(
+      messages
+        .filter(m => m.sender_id !== "system" && m.sender_id !== myId && m.sender_id !== myIdRef.current)
+        .map(m => [m.sender_id, m.display_name])
+    ).entries()
   );
 
   return (
