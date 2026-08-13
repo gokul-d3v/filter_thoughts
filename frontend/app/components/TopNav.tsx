@@ -17,51 +17,50 @@ export default function TopNav() {
     return pathname.startsWith(href);
   }
 
-  // Don't show on chat pages (they have their own header)
+  // Hide on chat pages — they have their own full-screen layout
   if (pathname.startsWith("/chat/")) return null;
 
   return (
-    <header className="hidden md:flex justify-between items-center max-w-7xl mx-auto px-12 h-24 w-full sticky top-0 z-30 bg-ivory-bg/90 backdrop-blur-md">
-      <div className="w-4" />
-      <nav className="flex space-x-8 bg-white/50 px-8 py-3 rounded-full shadow-soft backdrop-blur-sm border border-soft-clay/20">
-        {navLinks.map(({ href, label, exact }) => {
-          const active = isActive(href, exact);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`font-body-md text-body-md transition-all duration-200 ${
-                active
-                  ? "text-primary font-semibold border-b-2 border-deep-olive pb-0.5"
-                  : "text-on-surface-variant hover:text-deep-olive"
-              }`}
-            >
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="flex items-center space-x-4 text-primary">
-        <div className="relative">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-sage text-sm">search</span>
-          <input
-            className="pl-11 pr-5 py-2.5 bg-white shadow-soft border-none rounded-full focus:ring-2 focus:ring-muted-sage/30 font-label-md text-label-md w-56 transition-all duration-300 focus:w-64 outline-none"
-            placeholder="Search network..."
-            type="text"
-          />
-        </div>
+    <header className="w-full sticky top-0 z-50 bg-surface-bright/80 backdrop-blur-xl border-b border-surface-container-highest/40 hidden md:flex justify-between items-center px-8 h-20">
+      <div className="flex items-center gap-10">
+        <Link href="/" className="font-bold text-[20px] text-primary-container tracking-tight hover:opacity-80 transition-opacity">
+          Veritas Chat
+        </Link>
+        <nav className="flex gap-2">
+          {navLinks.map(({ href, label, exact }) => {
+            const active = isActive(href, exact);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`text-[15px] px-4 py-2 rounded-full transition-all duration-200 ${
+                  active
+                    ? "bg-primary-container text-white font-semibold"
+                    : "text-on-surface-variant hover:text-primary-container hover:bg-surface-container-highest/20"
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="flex items-center gap-3">
         <Link
           href="/notifications"
-          className={`w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center hover:text-deep-olive transition-all hover:-translate-y-0.5 ${isActive("/notifications") ? "text-deep-olive ring-2 ring-soft-clay" : "text-muted-sage"}`}
+          className={`p-2 rounded-full transition-colors ${isActive("/notifications") ? "text-primary-container bg-surface-container" : "text-outline hover:text-primary-container hover:bg-surface-container-highest/20"}`}
         >
-          <span className="material-symbols-outlined text-[20px]">notifications</span>
+          <span className="material-symbols-outlined">notifications</span>
         </Link>
         <Link
           href="/settings"
-          className={`w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center hover:text-deep-olive transition-all hover:-translate-y-0.5 ${isActive("/settings") ? "text-deep-olive ring-2 ring-soft-clay" : "text-muted-sage"}`}
+          className={`p-2 rounded-full transition-colors ${isActive("/settings") ? "text-primary-container bg-surface-container" : "text-outline hover:text-primary-container hover:bg-surface-container-highest/20"}`}
         >
-          <span className="material-symbols-outlined text-[20px]">settings</span>
+          <span className="material-symbols-outlined">settings</span>
         </Link>
+        <div className="w-10 h-10 rounded-full bg-surface-container-highest border border-surface-container-highest/50 overflow-hidden flex items-center justify-center shadow-sm ml-1">
+          <span className="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+        </div>
       </div>
     </header>
   );

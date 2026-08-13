@@ -104,15 +104,15 @@ export default function Home() {
       variants={containerVariants} 
       initial="hidden" 
       animate="visible"
-      className="min-h-screen bg-ivory-bg text-on-surface font-body-md"
+      className="min-h-screen bg-background text-on-surface"
     >
       
       {/*  Main Content Area  */}
       <main className="flex-1 p-6 md:p-12 transition-all duration-300">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8 max-w-3xl">
-            <h1 className="hidden md:block font-headline-lg text-headline-lg text-primary mb-4 tracking-tight">Discovery Hub</h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant/90 leading-relaxed">Explore active network nodes and secure communication channels. All metrics are anonymized and end-to-end encrypted.</p>
+            <h1 className="hidden md:block text-[32px] font-bold text-primary-container mb-4 tracking-tight">Discovery Hub</h1>
+            <p className="text-[17px] text-on-surface-variant/90 leading-relaxed">Explore active network nodes and secure communication channels. All metrics are anonymized and end-to-end encrypted.</p>
           </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 {/*  Main Content Column  */}

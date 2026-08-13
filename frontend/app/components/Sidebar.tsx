@@ -4,18 +4,18 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const sidebarLinks = [
-  { href: "/", icon: "explore", label: "Discovery Hub", exact: true },
-  { href: "/active", icon: "chat", label: "Active Chats" },
-  { href: "/rooms", icon: "domain", label: "Rooms" },
+  { href: "/", icon: "explore", label: "Discovery", exact: true },
+  { href: "/active", icon: "chat_bubble", label: "Active Chats" },
+  { href: "/archives", icon: "archive", label: "Archives" },
   { href: "/private", icon: "lock", label: "Private" },
-  { href: "/archives", icon: "inventory_2", label: "Archives" },
+  { href: "/rooms", icon: "domain", label: "Rooms" },
+  { href: "/admin", icon: "shield", label: "Moderation" },
 ];
 
 const mobileLinks = [
-  { href: "/", icon: "explore", label: "Discovery", exact: true },
+  { href: "/", icon: "search", label: "Discover", exact: true },
   { href: "/active", icon: "chat", label: "Chat" },
-  { href: "/private", icon: "lock", label: "Private" },
-  { href: "/rooms", icon: "domain", label: "Rooms" },
+  { href: "/rooms", icon: "groups", label: "Rooms" },
   { href: "/profile", icon: "person", label: "Me" },
 ];
 
@@ -27,106 +27,98 @@ export default function Sidebar() {
     return pathname.startsWith(href);
   }
 
+  // Hide on chat pages — they use a different full-screen layout
+  if (pathname.startsWith("/chat/")) return null;
+
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col p-8 space-y-6 h-[calc(100vh-4rem)] w-24 xl:w-72 fixed left-6 top-8 rounded-3xl border border-soft-clay/50 bg-white/80 backdrop-blur-xl shadow-soft z-40">
-        <Link href="/" className="flex items-center space-x-3 mb-4 group">
-          <span className="material-symbols-outlined text-deep-olive text-3xl xl:hidden">spa</span>
-          <h1 className="hidden xl:block font-headline-md text-[24px] text-primary font-bold tracking-tight group-hover:text-deep-olive transition-colors">Veritas Chat</h1>
-        </Link>
+      <nav className="h-screen w-72 fixed left-0 top-0 bg-surface-container-lowest/80 backdrop-blur-xl border-r border-surface-container-highest/40 hidden md:flex flex-col p-8 z-40">
+        {/* User Profile */}
+        <div className="mb-8 mt-20 pt-2">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center border border-surface-container-highest/50 shadow-sm">
+              <span className="material-symbols-outlined text-on-surface-variant text-[22px]">public</span>
+            </div>
+            <div>
+              <div className="text-[15px] font-semibold text-primary-container tracking-tight">Anonymous User</div>
+              <div className="text-[12px] text-outline mt-0.5">Incognito Mode</div>
+            </div>
+          </div>
+          <Link
+            href="/?action=create"
+            className="w-full bg-primary-container text-white text-[14px] font-semibold py-3.5 rounded-2xl hover:bg-primary transition-all shadow-md flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
+            Start New Chat
+          </Link>
+        </div>
 
-        <nav className="flex-1 space-y-2 flex flex-col items-center xl:items-start xl:w-full xl:pl-4">
+        {/* Nav Links */}
+        <div className="flex-1 space-y-1">
           {sidebarLinks.map(({ href, icon, label, exact }) => {
             const active = isActive(href, exact);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center space-x-4 p-4 rounded-2xl w-14 xl:w-full transition-all group ${
+                className={`flex items-center gap-4 px-4 py-3 text-[14px] rounded-xl transition-all ${
                   active
-                    ? "text-primary bg-soft-clay/40 font-semibold"
-                    : "text-muted-sage hover:text-deep-olive hover:bg-soft-clay/20"
+                    ? "bg-primary-container/10 text-primary-container font-semibold shadow-sm"
+                    : "text-on-surface-variant hover:bg-surface-container-highest/30 hover:text-primary-container"
                 }`}
               >
-                <span className={`material-symbols-outlined text-[22px] transition-transform ${active ? "text-deep-olive" : "group-hover:scale-110"}`}>{icon}</span>
-                <span className="font-label-md hidden xl:block">{label}</span>
-                {active && <span className="hidden xl:block ml-auto w-1.5 h-1.5 rounded-full bg-deep-olive" />}
+                <span
+                  className={`material-symbols-outlined text-[20px] ${active ? "text-primary-container" : "text-outline"}`}
+                  style={active ? { fontVariationSettings: "'FILL' 1" } : {}}
+                >
+                  {icon}
+                </span>
+                {label}
               </Link>
             );
           })}
+        </div>
 
-          <div className="hidden xl:block pt-2 border-t border-soft-clay/30 w-full pl-4">
-            <p className="font-label-sm text-[11px] text-muted-sage uppercase tracking-widest mb-2">Admin</p>
+        {/* Footer Links */}
+        <div className="mt-auto space-y-1 pt-6 border-t border-surface-container-highest/40">
+          <Link href="/notifications" className="flex items-center gap-4 px-4 py-3 text-[14px] text-on-surface-variant hover:bg-surface-container-highest/30 rounded-xl transition-all">
+            <span className="material-symbols-outlined text-outline text-[20px]">notifications</span>
+            Notifications
+          </Link>
+          <Link href="/settings" className="flex items-center gap-4 px-4 py-3 text-[14px] text-on-surface-variant hover:bg-surface-container-highest/30 rounded-xl transition-all">
+            <span className="material-symbols-outlined text-outline text-[20px]">help</span>
+            Help & Settings
+          </Link>
+          <button className="flex items-center gap-4 px-4 py-3 text-[14px] text-on-surface-variant hover:bg-surface-container-highest/30 rounded-xl transition-all w-full">
+            <span className="material-symbols-outlined text-outline text-[20px]">logout</span>
+            Sign Out
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="fixed bottom-0 w-full z-50 bg-surface-bright/90 backdrop-blur-xl border-t border-surface-container-highest/40 flex justify-around items-center px-4 py-3 md:hidden">
+        {mobileLinks.map(({ href, icon, label, exact }) => {
+          const active = isActive(href, exact);
+          return (
             <Link
-              href="/admin"
-              className={`flex items-center space-x-4 p-3 rounded-xl w-full transition-all group ${
-                isActive("/admin") ? "text-primary bg-soft-clay/40" : "text-muted-sage hover:text-deep-olive hover:bg-soft-clay/20"
+              key={href}
+              href={href}
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all active:scale-95 ${
+                active ? "text-primary-container font-bold" : "text-outline hover:text-primary-container"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">gavel</span>
-              <span className="font-label-md">Moderation</span>
-            </Link>
-          </div>
-        </nav>
-
-        <div className="mt-auto flex flex-col items-center xl:items-stretch">
-          <Link
-            href="/?action=create"
-            className="w-12 h-12 xl:w-full bg-deep-olive text-ivory-bg xl:py-3.5 xl:px-6 rounded-full font-label-md text-label-md mb-6 hover:bg-muted-sage hover:-translate-y-0.5 hover:shadow-float transition-all duration-300 flex items-center justify-center space-x-0 xl:space-x-2"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            <span className="hidden xl:block">Start New Chat</span>
-          </Link>
-
-          <div className="space-y-1 flex flex-col items-center xl:items-stretch xl:w-full xl:pl-4 mb-4 border-b border-soft-clay/30 pb-4">
-            <Link
-              href="/notifications"
-              className={`flex items-center space-x-4 text-muted-sage hover:text-deep-olive p-2 rounded-xl transition-colors w-12 xl:w-full justify-center xl:justify-start group ${isActive("/notifications") ? "text-primary bg-soft-clay/40" : ""}`}
-            >
-              <span className="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">notifications</span>
-              <span className="font-label-sm hidden xl:block">Notifications</span>
-            </Link>
-            <Link
-              href="/settings"
-              className={`flex items-center space-x-4 text-muted-sage hover:text-deep-olive p-2 rounded-xl transition-colors w-12 xl:w-full justify-center xl:justify-start group ${isActive("/settings") ? "text-primary bg-soft-clay/40" : ""}`}
-            >
-              <span className="material-symbols-outlined text-[20px] group-hover:rotate-45 transition-transform">settings</span>
-              <span className="font-label-sm hidden xl:block">Settings</span>
-            </Link>
-          </div>
-
-          <div className="flex items-center space-x-3 w-full justify-center xl:justify-start xl:pl-4 cursor-pointer group">
-            <div className="w-10 h-10 rounded-full bg-soft-clay border-2 border-white flex items-center justify-center flex-shrink-0 relative overflow-hidden group-hover:shadow-soft transition-all">
-              <span className="material-symbols-outlined text-muted-sage text-[20px]">public</span>
-            </div>
-            <div className="hidden xl:flex flex-col">
-              <span className="font-label-sm font-bold text-primary leading-tight">Anonymous</span>
-              <span className="font-label-sm text-[11px] text-muted-sage">Incognito Mode</span>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-soft-clay/50 p-2 z-50 flex justify-around items-center pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-        <div className="flex justify-around items-center w-full max-w-sm">
-          {mobileLinks.map(({ href, icon, label, exact }) => {
-            const active = isActive(href, exact);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex flex-col items-center justify-center p-2 rounded-2xl transition-all duration-200 active:scale-95 ${active ? "text-deep-olive" : "text-muted-sage hover:text-deep-olive"}`}
+              <span
+                className="material-symbols-outlined"
+                style={active ? { fontVariationSettings: "'FILL' 1" } : {}}
               >
-                <div className={`px-4 py-1 rounded-xl mb-1 ${active ? "bg-soft-clay/40 shadow-sm" : ""}`}>
-                  <span className={`material-symbols-outlined text-[22px] ${active ? "text-deep-olive" : ""}`}>{icon}</span>
-                </div>
-                <span className={`font-label-sm text-[11px] ${active ? "font-bold" : ""}`}>{label}</span>
-              </Link>
-            );
-          })}
-        </div>
+                {icon}
+              </span>
+              <span className="text-[10px] mt-1">{label}</span>
+            </Link>
+          );
+        })}
       </nav>
     </>
   );
