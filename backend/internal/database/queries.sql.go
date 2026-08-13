@@ -177,9 +177,12 @@ func (q *Queries) GetRoomByJoinCode(ctx context.Context, joinCode pgtype.Text) (
 }
 
 const getRoomMessages = `-- name: GetRoomMessages :many
-SELECT id, room_id, user_id, content, created_at, deleted_at FROM messages
-WHERE room_id = $1 AND deleted_at IS NULL
-ORDER BY created_at DESC
+SELECT m.id, m.room_id, m.user_id, m.content, m.created_at, m.deleted_at,
+       u.display_name
+FROM messages m
+JOIN users u ON m.user_id = u.id
+WHERE m.room_id = $1 AND m.deleted_at IS NULL
+ORDER BY m.created_at DESC
 LIMIT $2 OFFSET $3
 `
 
@@ -189,15 +192,25 @@ type GetRoomMessagesParams struct {
 	Offset int32  `json:"offset"`
 }
 
-func (q *Queries) GetRoomMessages(ctx context.Context, arg GetRoomMessagesParams) ([]Message, error) {
+type GetRoomMessagesRow struct {
+	ID          string             `json:"id"`
+	RoomID      string             `json:"room_id"`
+	UserID      string             `json:"user_id"`
+	Content     string             `json:"content"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	DisplayName string             `json:"display_name"`
+}
+
+func (q *Queries) GetRoomMessages(ctx context.Context, arg GetRoomMessagesParams) ([]GetRoomMessagesRow, error) {
 	rows, err := q.db.Query(ctx, getRoomMessages, arg.RoomID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Message
+	var items []GetRoomMessagesRow
 	for rows.Next() {
-		var i Message
+		var i GetRoomMessagesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.RoomID,
@@ -205,6 +218,7 @@ func (q *Queries) GetRoomMessages(ctx context.Context, arg GetRoomMessagesParams
 			&i.Content,
 			&i.CreatedAt,
 			&i.DeletedAt,
+			&i.DisplayName,
 		); err != nil {
 			return nil, err
 		}

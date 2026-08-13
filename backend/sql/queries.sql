@@ -32,9 +32,12 @@ VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetRoomMessages :many
-SELECT * FROM messages
-WHERE room_id = $1 AND deleted_at IS NULL
-ORDER BY created_at DESC
+SELECT m.id, m.room_id, m.user_id, m.content, m.created_at, m.deleted_at,
+       u.display_name
+FROM messages m
+JOIN users u ON m.user_id = u.id
+WHERE m.room_id = $1 AND m.deleted_at IS NULL
+ORDER BY m.created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: UpsertPresence :exec

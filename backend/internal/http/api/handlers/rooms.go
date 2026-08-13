@@ -131,10 +131,9 @@ func (h *RoomsHandler) GetRoomMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if messages == nil {
-		messages = []database.Message{}
+		messages = []database.GetRoomMessagesRow{}
 	}
 
-	// We need to map the database.Message to the expected MessagePayload format for the frontend
 	type MessagePayload struct {
 		RoomID      string `json:"room_id"`
 		Content     string `json:"content"`
@@ -145,16 +144,11 @@ func (h *RoomsHandler) GetRoomMessages(w http.ResponseWriter, r *http.Request) {
 
 	payloads := make([]MessagePayload, 0)
 	for _, m := range messages {
-		// We'd normally join with users table to get display name.
-		// For simplicity, we just use the user ID as display name here or do a quick lookup.
-		// Since we didn't join in GetRoomMessages, let's just mock the display name for history
-		// or fetch it individually (not optimal, but fine for now) or modify the SQL.
-		// Let's modify the SQL later, for now just use "User"
 		payloads = append(payloads, MessagePayload{
 			RoomID:      m.RoomID,
 			Content:     m.Content,
 			SenderID:    m.UserID,
-			DisplayName: "Unknown User", // Requires SQL JOIN to get actual name
+			DisplayName: m.DisplayName, // Now comes from the JOIN with users table
 			CreatedAt:   m.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
 		})
 	}

@@ -22,15 +22,42 @@ export default function ChatRoom() {
   const [input, setInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
   const [myId, setMyId] = useState("");
+  const [myDisplayName, setMyDisplayName] = useState("You");
+  const myIdRef = useRef(""); // ref so WS handler always has fresh value
   const ws = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    myIdRef.current = myId;
+  }, [myId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
+    async function initSession() {
+      try {
+        // Check existing session or create one
+        let res = await fetch("/api/v1/rooms"); // ping to check auth
+        if (res.status === 401) {
+          const sessionRes = await fetch("/api/v1/sessions", { method: "POST" });
+          if (sessionRes.ok) {
+            const data = await sessionRes.json();
+            myIdRef.current = data.user_id;
+            setMyId(data.user_id);
+            setMyDisplayName(data.display_name || "You");
+          }
+        } else {
+          // Session already exists — we can't easily get the user_id from rooms
+          // so we'll set it from the first WS message we send back
+        }
+      } catch (err) {
+        console.error("Session init error", err);
+      }
+    }
+
     async function fetchHistory() {
       try {
         const [msgRes, roomsRes] = await Promise.all([
@@ -71,8 +98,14 @@ export default function ChatRoom() {
         try {
           const data = JSON.parse(event.data);
           if (data.type === "message") {
-            setMessages((prev) => [...prev, data.payload]);
-            if (!myId && data.payload.sender_id) setMyId(data.payload.sender_id);
+            const incoming = data.payload as Message;
+            // If this is an echo of our own optimistic message, skip it
+            // (identified by matching sender_id and content arriving within 5s)
+            if (incoming.sender_id === myIdRef.current) {
+              // Already shown optimistically — skip to avoid duplicate
+              return;
+            }
+            setMessages((prev) => [...prev, incoming]);
           }
         } catch (err) {
           console.error("Error parsing message", err);
@@ -90,7 +123,7 @@ export default function ChatRoom() {
       };
     }
 
-    fetchHistory().then(connect);
+    initSession().then(fetchHistory).then(connect);
 
     return () => {
       isComponentMounted = false;
@@ -105,7 +138,20 @@ export default function ChatRoom() {
   const sendMessage = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!input.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
-    ws.current.send(JSON.stringify({ type: "message", payload: { room_id: roomId, content: input } }));
+
+    const content = input.trim();
+
+    // Optimistically add to UI immediately
+    const optimisticMsg: Message = {
+      room_id: roomId,
+      content,
+      sender_id: myIdRef.current,
+      display_name: myDisplayName,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    ws.current.send(JSON.stringify({ type: "message", payload: { room_id: roomId, content } }));
     setInput("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
